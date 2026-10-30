@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+*.sr
+*.vcd
+logs/*.log
+!logs/.gitkeep
+Thumbs.db
+desktop.ini
+.DS_Store

@@ -1,0 +1,6 @@
+# На Raspberry Pi OS краще ставити через apt (див. scripts/pi3/setup.sh).
+# Цей файл — для venv або інших дистрибутивів.
+pytest>=7
+pyserial>=3.5
+spidev>=3.6
+gpiozero>=2.0
