@@ -20,7 +20,6 @@
 | Поломка | Тест-кейс | Що в терміналі | Що на аналізаторі | Скрін | Статус |
 | --- | --- | --- | --- | --- | --- |
 | У коді `ADDR = 0x69` при AD0 на GND | TC-11 | `scan` показує `0x68`, `OSError: [Errno 110] ETIMEDOUT` на рядку 8 (WHO_AM_I) | `Address write: 69` → `W` → NACK → Stop | [термінал](screenshots/tc11-addr-0x69-terminal.png), [трейс](screenshots/tc11-addr-0x69-nack-trace.png) | виконано |
-| AD0 на 3V3, а в коді `ADDR = 0x68` (це пункт вправи 4, у вправу 6 не входить) | TC-06 | очікується `scan: ['0x69']` і `OSError` | адреса 0x68 і одразу NACK | | необов'язково, не виконано |
 | SDA і SCL міняємо місцями на стороні датчика | TC-07 | `scan: []`, `OSError: [Errno 110] ETIMEDOUT` на рядку 8 | кадр майстра коректний: `Address write: 68` → `W` → NACK → Stop. Аналізатор стоїть на пінах Pico, тому «биті» пакети не видно, видно лише відсутність ACK | [термінал](screenshots/tc07-swapped-sda-scl-terminal.png), [трейс](screenshots/tc07-swapped-sda-scl-trace.png) | виконано |
 | Відключаємо VCC датчика (червоний дріт до 3V3 прибрано) | TC-08 | очікувалось `scan: []`, фактично `scan: ['0x68']`, `WHO_AM_I: 0x68`, дані читаються | не знімали, у терміналі помилок немає | [термінал](screenshots/tc08-vcc-disconnected-terminal.png) | не відтворено: обмеження симулятора |
 
