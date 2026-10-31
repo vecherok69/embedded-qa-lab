@@ -3,9 +3,9 @@
 СТАТУС: написано заздалегідь, на залізі ще не запускалося.
 
 Потрібні перемички (Dupont, мама-мама):
-  UART loopback: GPIO14 TX (пин 8)  <->  GPIO15 RX (пин 10)
-  SPI loopback:  GPIO10 MOSI (пин 19) <-> GPIO9 MISO (пин 21)
-  GPIO:          GPIO17 (пин 11)    <->  GPIO27 (пин 13)
+  UART loopback: GPIO14 TX (пін 8)  <->  GPIO15 RX (пін 10)
+  SPI loopback:  GPIO10 MOSI (пін 19) <-> GPIO9 MISO (пін 21)
+  GPIO:          GPIO17 (пін 11)    <->  GPIO27 (пін 13)
 
 Встановлення: bash scripts/pi3/setup.sh
 Запуск:       pytest -v -s src/pi3/test_interfaces.py
