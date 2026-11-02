@@ -1,6 +1,6 @@
 """Апаратні тести інтерфейсів Raspberry Pi 3 (pytest).
 
-СТАТУС: написано заздалегідь, на залізі ще не запускалося.
+Статус: UART-тести пройдено на залізі в день 2; повний регресійний прогін — день 3, логи logs/day3-loopback-*.
 
 Потрібні перемички (Dupont, мама-мама):
   UART loopback: GPIO14 TX (пін 8)  <->  GPIO15 RX (пін 10)
@@ -9,6 +9,7 @@
 
 Встановлення: bash scripts/pi3/setup.sh
 Запуск:       pytest -v -s src/pi3/test_interfaces.py
+Регресія з логами: bash scripts/pi3/run_all_tests.sh loopback
 """
 import time
 
