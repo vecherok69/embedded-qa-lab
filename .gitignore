@@ -9,3 +9,6 @@ logs/*.log
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Особистий план роботи — не для публічного репозиторію
+STATE.md
