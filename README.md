@@ -62,7 +62,6 @@ docs/
   bug-reports/                      BUG-001…BUG-004 і шаблон
   notes/i2c-traces.md               розбір трейсів I2C у PulseView
   wokwi-closeout.md                 підсумок роботи в симуляторі
-  interview/star-stories.md         історії для співбесіди (STAR)
   screenshots/                      докази: термінали, трейси, заміри
 scripts/pi3/
   setup.sh                          пакети + увімкнення SPI, I2C, UART
