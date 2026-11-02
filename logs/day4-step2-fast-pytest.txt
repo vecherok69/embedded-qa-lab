@@ -1,0 +1,66 @@
+src/pi3/test_pico_display.py::test_echo_latency_while_drawing latency, ms: 2.3, 2.1, 2.1, 2.0, 2.1
+PASSED
+src/pi3/test_pico_display.py::test_burst_bigger_than_rx_buffer sent=12 received=11 ok=10 missing=['B09', 'B10'] time=30.3 s
+FAILED
+src/pi3/test_pico_display.py::test_command_after_load reply: b'STAT lines=18 long=0 stale=0 baud=115200 mode=fast draws=6 draw_ms_last=29 draw_ms_max=29\n'
+PASSED
+src/pi3/test_pico_display.py::test_partial_line_not_glued_to_next_command reply: b'PONG\n'
+PASSED
+
+=================================================================================================== FAILURES ====================================================================================================
+_______________________________________________________________________________________ test_burst_bigger_than_rx_buffer ________________________________________________________________________________________
+
+port = Serial<id=0x7f96ba94b0, open=True>(port='/dev/serial0', baudrate=115200, bytesize=8, parity='N', stopbits=1, timeout=30, xonxoff=False, rtscts=False, dsrdtr=False)
+
+    def test_burst_bigger_than_rx_buffer(port):
+        """R2: 12 рядків по 200 байт одним записом, далі чекаємо всі луни."""
+        sent = []
+        for i in range(BURST_LINES):
+            head = "B%02d-" % i
+            sent.append((head + "x" * (BURST_LEN - len(head) - 1) + "\n").encode())
+        started = time.time()
+        port.write(b"".join(sent))
+        received = []
+        deadline = started + 300
+        while len(received) < BURST_LINES and time.time() < deadline:
+            line = port.readline()
+            if not line:  # 30 с тиші: далі чекати немає сенсу
+                break
+            received.append(line)
+        elapsed = time.time() - started
+        ok = [line for line in received if line in sent]
+        missing = [s[:3].decode() for s in sent if s not in received]
+        print("sent=%d received=%d ok=%d missing=%s time=%.1f s"
+              % (len(sent), len(received), len(ok), missing, elapsed))
+>       assert len(ok) == BURST_LINES
+E       AssertionError: assert 10 == 12
+E        +  where 10 = len([b'B00-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n', b'B01-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n', b'B02-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n', b'B03-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n', b'B04-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n', b'B05-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n', ...])
+
+src/pi3/test_pico_display.py:74: AssertionError
+============================================================================================ short test summary info ============================================================================================
+FAILED src/pi3/test_pico_display.py::test_burst_bigger_than_rx_buffer - AssertionError: assert 10 == 12
+========================================================================================= 1 failed, 3 passed in 33.30s ==========================================================================================
+============================================================================================== test session starts ==============================================================================================
+platform linux -- Python 3.13.5, pytest-8.3.5, pluggy-1.5.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/vecher/embedded-qa-lab
+collected 11 items
+
+src/pi3/test_pico_uart.py::test_ping PASSED
+src/pi3/test_pico_uart.py::test_echo_hello PASSED
+src/pi3/test_pico_uart.py::test_echo_soak_1000 lost=0 corrupted=0 of 1000, time=2.35 s
+PASSED
+src/pi3/test_pico_uart.py::test_echo_all_byte_values PASSED
+src/pi3/test_pico_uart.py::test_too_long_line_rejected_and_recovers PASSED
+src/pi3/test_pico_uart.py::test_unknown_command PASSED
+src/pi3/test_pico_uart.py::test_invalid_baud_rejected PASSED
+src/pi3/test_pico_uart.py::test_baud_sweep[115200] baud=115200 lost=0 of 200
+PASSED
+src/pi3/test_pico_uart.py::test_baud_sweep[230400] baud=230400 lost=0 of 200
+PASSED
+src/pi3/test_pico_uart.py::test_baud_sweep[460800] baud=460800 lost=0 of 200
+PASSED
+src/pi3/test_pico_uart.py::test_baud_sweep[921600] baud=921600 lost=0 of 200
+PASSED
+
+============================================================================================== 11 passed in 4.96s

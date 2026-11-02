@@ -28,7 +28,7 @@ import machine
 import ustruct
 from machine import UART, Pin
 
-MODE = "legacy"  # "legacy" або "fast"
+MODE = "fast"  # "legacy" або "fast"
 
 UART_ID = 0
 TX_PIN = 0
