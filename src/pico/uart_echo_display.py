@@ -11,7 +11,9 @@ CMD:BAUD=<число>, ERR:LONG), тому test_pico_uart.py працює і з 
              Режим для відтворення дефекту.
   "fast"   - виправлення: луна відправляється одразу, дисплей оновлюється лише тоді,
              коли лінія простоює IDLE_MS мс; апаратний SPI0 і буфер кадру framebuf,
-             перемальовується лише смуга з текстом.
+             перемальовується лише смуга з текстом; недописаний рядок, після якого
+             LINE_TIMEOUT_MS мс тиші, відкидається (не склеюється з наступним).
+Обидва виправлення стосуються BUG-003 (docs/bug-reports/).
 
 Підключення UART (як у кроці 1):
   Pico GP0 TX (пін 1) -> Pi 3 пін 10, Pico GP1 RX (пін 2) <- Pi 3 пін 8, GND пін 3 -- Pi 3 пін 6.
@@ -34,6 +36,8 @@ RX_PIN = 1
 BAUD = 115200
 MAX_LINE = 256
 IDLE_MS = 50  # fast: скільки мс тиші на лінії перед оновленням дисплея
+LINE_TIMEOUT_MS = 100  # fast: недописаний рядок без '\n' після стількох мс тиші відкидається
+RESYNC = MODE == "fast"  # legacy лишаємо без цього, щоб відтворювати BUG-003 як є
 SPI_HZ = 20_000_000  # fast: якщо на екрані сміття, знизити до 10_000_000
 
 W = 240
@@ -234,6 +238,7 @@ buf = b""
 lines = 0
 too_long = 0
 skipping = False
+stale = 0  # скільки недописаних рядків відкинуто за тайм-аутом
 pending = None  # fast: останній рядок, який ще не показано
 last_rx = time.ticks_ms()
 
@@ -257,8 +262,8 @@ def handle(line):
     if cmd == b"PING":
         uart.write(b"PONG\n")
     elif cmd == b"STAT":
-        uart.write(("STAT lines=%d long=%d baud=%d mode=%s draws=%d draw_ms_last=%d draw_ms_max=%d\n"
-                    % (lines, too_long, baud, MODE, draws, draw_ms_last, draw_ms_max)).encode())
+        uart.write(("STAT lines=%d long=%d stale=%d baud=%d mode=%s draws=%d draw_ms_last=%d draw_ms_max=%d\n"
+                    % (lines, too_long, stale, baud, MODE, draws, draw_ms_last, draw_ms_max)).encode())
     elif cmd.startswith(b"BAUD="):
         try:
             new = int(cmd[5:])
@@ -296,6 +301,11 @@ while True:
                 uart.write(b"ERR:LONG\n")
                 continue
             handle(line)
+    elif RESYNC and buf and time.ticks_diff(time.ticks_ms(), last_rx) > LINE_TIMEOUT_MS:
+        print("stale: відкинуто %d байт без '\\n'" % len(buf))
+        buf = b""
+        skipping = False
+        stale += 1
     elif pending and time.ticks_diff(time.ticks_ms(), last_rx) > IDLE_MS:
         draw_message(*pending)
         pending = None

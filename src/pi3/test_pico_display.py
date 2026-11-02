@@ -6,6 +6,7 @@
   R2. Пачка рядків, надісланих без пауз (більше за буфер прийому Pico, 2048 байт),
       повертається повністю.
   R3. Після навантаження DUT коректно відповідає на службову команду.
+  R4. Обірваний рядок (без '\n') не склеюється з наступною командою.
 
 Підключення як у test_pico_uart.py. Запуск:
   pytest -v -s src/pi3/test_pico_display.py
@@ -81,3 +82,14 @@ def test_command_after_load(port):
     reply = port.readline()
     print("reply: %r" % reply)
     assert reply.startswith(b"STAT ")
+
+
+def test_partial_line_not_glued_to_next_command(port):
+    """R4: шматок без '\\n', пауза 0,5 с, потім CMD:PING -> має бути PONG."""
+    port.write(b"partial-no-newline")
+    time.sleep(0.5)
+    port.reset_input_buffer()
+    port.write(b"CMD:PING\n")
+    reply = port.readline()
+    print("reply: %r" % reply)
+    assert reply == b"PONG\n"

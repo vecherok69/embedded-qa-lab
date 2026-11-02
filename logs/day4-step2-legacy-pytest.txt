@@ -1,0 +1,87 @@
+platform linux -- Python 3.13.5, pytest-8.3.5, pluggy-1.5.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/vecher/embedded-qa-lab
+collected 3 items
+
+src/pi3/test_pico_display.py::test_echo_latency_while_drawing latency, ms: 2.6, 5539.4, 5524.7, 5530.9, 5530.8
+FAILED
+src/pi3/test_pico_display.py::test_burst_bigger_than_rx_buffer sent=12 received=10 ok=10 missing=['B10', 'B11'] time=97.4 s
+FAILED
+src/pi3/test_pico_display.py::test_command_after_load reply: b'B10-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxCMD:STAT\n'
+FAILED
+
+=================================================================================================== FAILURES ====================================================================================================
+________________________________________________________________________________________ test_echo_latency_while_drawing ________________________________________________________________________________________
+
+port = Serial<id=0x7fae749300, open=True>(port='/dev/serial0', baudrate=115200, bytesize=8, parity='N', stopbits=1, timeout=30, xonxoff=False, rtscts=False, dsrdtr=False)
+
+    def test_echo_latency_while_drawing(port):
+        """R1: 5 повідомлень з паузою 0,2 с, щоб DUT встигав почати малювати між ними."""
+        latencies = []
+        wrong = 0
+        for i in range(5):
+            msg = ("lat-%d\n" % i).encode()
+            started = time.time()
+            port.write(msg)
+            got = port.readline()
+            latencies.append(time.time() - started)
+            if got != msg:
+                wrong += 1
+            time.sleep(0.2)
+        print("latency, ms: %s" % ", ".join("%.1f" % (x * 1000) for x in latencies))
+        assert wrong == 0
+>       assert max(latencies) < LATENCY_LIMIT_S
+E       assert 5.539422273635864 < 0.1
+E        +  where 5.539422273635864 = max([0.002565145492553711, 5.539422273635864, 5.52468204498291, 5.530857086181641, 5.530763387680054])
+
+src/pi3/test_pico_display.py:50: AssertionError
+_______________________________________________________________________________________ test_burst_bigger_than_rx_buffer ________________________________________________________________________________________
+
+port = Serial<id=0x7fae803d60, open=True>(port='/dev/serial0', baudrate=115200, bytesize=8, parity='N', stopbits=1, timeout=30, xonxoff=False, rtscts=False, dsrdtr=False)
+
+    def test_burst_bigger_than_rx_buffer(port):
+        """R2: 12 рядків по 200 байт одним записом, далі чекаємо всі луни."""
+        sent = []
+        for i in range(BURST_LINES):
+            head = "B%02d-" % i
+            sent.append((head + "x" * (BURST_LEN - len(head) - 1) + "\n").encode())
+        started = time.time()
+        port.write(b"".join(sent))
+        received = []
+        deadline = started + 300
+        while len(received) < BURST_LINES and time.time() < deadline:
+            line = port.readline()
+            if not line:  # 30 с тиші: далі чекати немає сенсу
+                break
+            received.append(line)
+        elapsed = time.time() - started
+        ok = [line for line in received if line in sent]
+        missing = [s[:3].decode() for s in sent if s not in received]
+        print("sent=%d received=%d ok=%d missing=%s time=%.1f s"
+              % (len(sent), len(received), len(ok), missing, elapsed))
+>       assert len(ok) == BURST_LINES
+E       AssertionError: assert 10 == 12
+E        +  where 10 = len([b'B00-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n', b'B01-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n', b'B02-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n', b'B03-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n', b'B04-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n', b'B05-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n', ...])
+
+src/pi3/test_pico_display.py:73: AssertionError
+____________________________________________________________________________________________ test_command_after_load ____________________________________________________________________________________________
+
+port = Serial<id=0x7fae801e70, open=True>(port='/dev/serial0', baudrate=115200, bytesize=8, parity='N', stopbits=1, timeout=30, xonxoff=False, rtscts=False, dsrdtr=False)
+
+    def test_command_after_load(port):
+        """R3: після навантаження DUT відповідає на CMD:STAT."""
+        time.sleep(1)
+        port.reset_input_buffer()
+        port.write(b"CMD:STAT\n")
+        reply = port.readline()
+        print("reply: %r" % reply)
+>       assert reply.startswith(b"STAT ")
+E       AssertionError: assert False
+E        +  where False = <built-in method startswith of bytes object at 0x7fae7d4830>(b'STAT ')
+E        +    where <built-in method startswith of bytes object at 0x7fae7d4830> = b'B10-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxCMD:STAT\n'.startswith
+
+src/pi3/test_pico_display.py:83: AssertionError
+============================================================================================ short test summary info ============================================================================================
+FAILED src/pi3/test_pico_display.py::test_echo_latency_while_drawing - assert 5.539422273635864 < 0.1
+FAILED src/pi3/test_pico_display.py::test_burst_bigger_than_rx_buffer - AssertionError: assert 10 == 12
+FAILED src/pi3/test_pico_display.py::test_command_after_load - AssertionError: assert False
