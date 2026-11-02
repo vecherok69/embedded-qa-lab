@@ -1,0 +1,62 @@
+=== День 3, фаза: loopback
+commit:    3ee405c
+branch:    main
+kernel:    6.18.50+rpt-rpi-v8
+model:     Raspberry Pi 3 Model B Plus Rev 1.3
+python:    Python 3.13.5
+pytest:    pytest 8.3.5
+тести:     src/pi3/test_interfaces.py
+
+### стан стенда ДО прогону
+date:      2026-11-02T21:32:12+02:00
+throttled: throttled=0x0
+temp:      temp=46.2'C
+clock arm: frequency(48)=1400146000
+serial0:   /dev/ttyS0
+uart counters:
+  serinfo:1.0 driver revision:
+  0: uart:16550 mmio:0x3F215040 irq:71 tx:221274 rx:220360 CTS
+
+============================= test session starts ==============================
+platform linux -- Python 3.13.5, pytest-8.3.5, pluggy-1.5.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/vecher/embedded-qa-lab
+collecting ... collected 4 items
+
+src/pi3/test_interfaces.py::test_uart_loopback PASSED
+src/pi3/test_interfaces.py::test_uart_loopback_soak lost=0 of 1000, time=0.83 s
+PASSED
+src/pi3/test_interfaces.py::test_spi_loopback PASSED
+src/pi3/test_interfaces.py::test_gpio_level_through_jumper PASSED
+
+=============================== warnings summary ===============================
+src/pi3/test_interfaces.py::test_gpio_level_through_jumper
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+src/pi3/test_interfaces.py::test_gpio_level_through_jumper
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+==================================== PASSES ====================================
+- generated xml file: /home/vecher/embedded-qa-lab/logs/day3-loopback-20261102-213211.xml -
+=========================== short test summary info ============================
+PASSED src/pi3/test_interfaces.py::test_uart_loopback
+PASSED src/pi3/test_interfaces.py::test_uart_loopback_soak
+PASSED src/pi3/test_interfaces.py::test_spi_loopback
+PASSED src/pi3/test_interfaces.py::test_gpio_level_through_jumper
+======================== 4 passed, 2 warnings in 1.36s =========================
+<sys>:0: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+### стан стенда ПІСЛЯ прогону
+date:      2026-11-02T21:32:15+02:00
+throttled: throttled=0x0
+temp:      temp=47.2'C
+clock arm: frequency(48)=1400000000
+serial0:   /dev/ttyS0
+uart counters:
+  serinfo:1.0 driver revision:
+  0: uart:16550 mmio:0x3F215040 irq:71 tx:230280 rx:229366 CTS
+
+=== Підсумок: код виходу pytest = 0 (0 = усі passed), тривалість 2 с
+Лог:   logs/day3-loopback-20261102-213211.txt
+JUnit: logs/day3-loopback-20261102-213211.xml

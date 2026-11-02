@@ -1,0 +1,83 @@
+=== День 3, фаза: pico
+commit:    3ee405c
+branch:    main
+kernel:    6.18.50+rpt-rpi-v8
+model:     Raspberry Pi 3 Model B Plus Rev 1.3
+python:    Python 3.13.5
+pytest:    pytest 8.3.5
+тести:     src/pi3/test_pico_uart.py src/pi3/test_pico_display.py
+
+### стан стенда ДО прогону
+date:      2026-11-02T21:34:23+02:00
+throttled: throttled=0x0
+temp:      temp=46.2'C
+clock arm: frequency(48)=1400002000
+serial0:   /dev/ttyS0
+uart counters:
+  serinfo:1.0 driver revision:
+  0: uart:16550 mmio:0x3F215040 irq:71 tx:230280 rx:229366 CTS
+
+============================= test session starts ==============================
+platform linux -- Python 3.13.5, pytest-8.3.5, pluggy-1.5.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/vecher/embedded-qa-lab
+collecting ... collected 15 items
+
+src/pi3/test_pico_uart.py::test_ping PASSED
+src/pi3/test_pico_uart.py::test_echo_hello PASSED
+src/pi3/test_pico_uart.py::test_echo_soak_1000 lost=0 corrupted=0 of 1000, time=2.57 s
+PASSED
+src/pi3/test_pico_uart.py::test_echo_all_byte_values PASSED
+src/pi3/test_pico_uart.py::test_too_long_line_rejected_and_recovers PASSED
+src/pi3/test_pico_uart.py::test_unknown_command PASSED
+src/pi3/test_pico_uart.py::test_invalid_baud_rejected PASSED
+src/pi3/test_pico_uart.py::test_baud_sweep[115200] baud=115200 lost=0 of 200
+PASSED
+src/pi3/test_pico_uart.py::test_baud_sweep[230400] baud=230400 lost=0 of 200
+PASSED
+src/pi3/test_pico_uart.py::test_baud_sweep[460800] baud=460800 lost=0 of 200
+PASSED
+src/pi3/test_pico_uart.py::test_baud_sweep[921600] baud=921600 lost=0 of 200
+PASSED
+src/pi3/test_pico_display.py::test_echo_latency_while_drawing latency, ms: 2.3, 2.3, 2.3, 2.4, 2.4
+PASSED
+src/pi3/test_pico_display.py::test_burst_bigger_than_rx_buffer sent=12 received=12 ok=12 missing=[] time=0.3 s
+PASSED
+src/pi3/test_pico_display.py::test_command_after_load reply: b'STAT lines=1833 long=1 stale=0 tx_short=6 baud=115200 mode=fast draws=11 draw_ms_last=33 draw_ms_max=33\n'
+PASSED
+src/pi3/test_pico_display.py::test_partial_line_not_glued_to_next_command reply: b'PONG\n'
+PASSED
+
+==================================== PASSES ====================================
+- generated xml file: /home/vecher/embedded-qa-lab/logs/day3-pico-20261102-213422.xml -
+=========================== short test summary info ============================
+PASSED src/pi3/test_pico_uart.py::test_ping
+PASSED src/pi3/test_pico_uart.py::test_echo_hello
+PASSED src/pi3/test_pico_uart.py::test_echo_soak_1000
+PASSED src/pi3/test_pico_uart.py::test_echo_all_byte_values
+PASSED src/pi3/test_pico_uart.py::test_too_long_line_rejected_and_recovers
+PASSED src/pi3/test_pico_uart.py::test_unknown_command
+PASSED src/pi3/test_pico_uart.py::test_invalid_baud_rejected
+PASSED src/pi3/test_pico_uart.py::test_baud_sweep[115200]
+PASSED src/pi3/test_pico_uart.py::test_baud_sweep[230400]
+PASSED src/pi3/test_pico_uart.py::test_baud_sweep[460800]
+PASSED src/pi3/test_pico_uart.py::test_baud_sweep[921600]
+PASSED src/pi3/test_pico_display.py::test_echo_latency_while_drawing
+PASSED src/pi3/test_pico_display.py::test_burst_bigger_than_rx_buffer
+PASSED src/pi3/test_pico_display.py::test_command_after_load
+PASSED src/pi3/test_pico_display.py::test_partial_line_not_glued_to_next_command
+============================== 15 passed in 8.39s ==============================
+
+### стан стенда ПІСЛЯ прогону
+date:      2026-11-02T21:34:33+02:00
+throttled: throttled=0x0
+temp:      temp=46.2'C
+clock arm: frequency(48)=1400000000
+serial0:   /dev/ttyS0
+uart counters:
+  serinfo:1.0 driver revision:
+  0: uart:16550 mmio:0x3F215040 irq:71 tx:252093 rx:250932 CTS
+
+=== Підсумок: код виходу pytest = 0 (0 = усі passed), тривалість 10 с
+Лог:   logs/day3-pico-20261102-213422.txt
+JUnit: logs/day3-pico-20261102-213422.xml
