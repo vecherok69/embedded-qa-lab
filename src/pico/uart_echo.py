@@ -34,6 +34,14 @@ except (TypeError, ValueError):
     led = Pin(25, Pin.OUT)  # старі збірки для звичайної Pico
 
 
+def send(data):
+    """Пише в UART усі байти: uart.write() може записати лише частину (див. BUG-004)."""
+    mv = memoryview(data)
+    off = 0
+    while off < len(data):
+        off += uart.write(mv[off:]) or 0
+
+
 def open_uart(baud):
     return UART(UART_ID, baudrate=baud, tx=Pin(TX_PIN), rx=Pin(RX_PIN), rxbuf=2048)
 
@@ -54,28 +62,28 @@ def handle(line):
     lines += 1
     led.toggle()
     if not line.startswith(b"CMD:"):
-        uart.write(line)
+        send(line)
         return
     cmd = line[4:].strip()
     if cmd == b"PING":
-        uart.write(b"PONG\n")
+        send(b"PONG\n")
     elif cmd == b"STAT":
-        uart.write(b"STAT lines=%d long=%d baud=%d\n" % (lines, too_long, baud))
+        send(("STAT lines=%d long=%d baud=%d\n" % (lines, too_long, baud)).encode())
     elif cmd.startswith(b"BAUD="):
         try:
             new = int(cmd[5:])
         except ValueError:
             new = 0
         if not 1200 <= new <= 921600:
-            uart.write(b"ERR:BAUD\n")
+            send(b"ERR:BAUD\n")
             return
-        uart.write(b"OK BAUD=%d\n" % new)
+        send(("OK BAUD=%d\n" % new).encode())
         time.sleep_ms(50)  # даємо відповіді повністю вийти на старій швидкості
         uart = open_uart(new)
         baud = new
         print("baud ->", new)
     else:
-        uart.write(b"ERR:CMD\n")
+        send(b"ERR:CMD\n")
 
 
 while True:
@@ -95,6 +103,6 @@ while True:
         if skipping or len(line) > MAX_LINE:
             skipping = False
             too_long += 1
-            uart.write(b"ERR:LONG\n")
+            send(b"ERR:LONG\n")
             continue
         handle(line)
