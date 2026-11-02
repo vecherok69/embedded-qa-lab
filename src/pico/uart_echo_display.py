@@ -14,6 +14,8 @@ CMD:BAUD=<число>, ERR:LONG), тому test_pico_uart.py працює і з 
              перемальовується лише смуга з текстом; недописаний рядок, після якого
              LINE_TIMEOUT_MS мс тиші, відкидається (не склеюється з наступним).
 Обидва виправлення стосуються BUG-003 (docs/bug-reports/).
+Усі відповіді йдуть через send(): дописує байти до кінця і рахує часткові записи
+(tx_short у CMD:STAT), див. BUG-004.
 
 Підключення UART (як у кроці 1):
   Pico GP0 TX (пін 1) -> Pi 3 пін 10, Pico GP1 RX (пін 2) <- Pi 3 пін 8, GND пін 3 -- Pi 3 пін 6.
@@ -28,7 +30,7 @@ import machine
 import ustruct
 from machine import UART, Pin
 
-MODE = "fast"  # "legacy" або "fast"
+MODE = "legacy"  # "legacy" або "fast"
 
 UART_ID = 0
 TX_PIN = 0
@@ -228,6 +230,23 @@ except (TypeError, ValueError):
     led = Pin(25, Pin.OUT)
 
 
+tx_short = 0  # скільки разів uart.write() записав менше, ніж просили (BUG-004)
+
+
+def send(data):
+    """Пише в UART усі байти. uart.write() на RP2040 при заповненому буфері передавання
+    може записати лише частину і повернути меншу кількість (або None). Без циклу
+    решта мовчки губиться."""
+    global tx_short
+    mv = memoryview(data)
+    off = 0
+    while off < len(data):
+        n = uart.write(mv[off:]) or 0
+        if n < len(data) - off:
+            tx_short += 1
+        off += n
+
+
 def open_uart(baud):
     return UART(UART_ID, baudrate=baud, tx=Pin(TX_PIN), rx=Pin(RX_PIN), rxbuf=2048)
 
@@ -251,7 +270,7 @@ def handle(line):
     lines += 1
     led.toggle()
     if not line.startswith(b"CMD:"):
-        uart.write(line)  # луна завжди першою, до будь-якого малювання
+        send(line)  # луна завжди першою, до будь-якого малювання
         raw = line.strip()
         if MODE == "legacy":
             draw_message(lines, raw)  # синхронно: поки малюємо, UART ніхто не читає
@@ -260,25 +279,25 @@ def handle(line):
         return
     cmd = line[4:].strip()
     if cmd == b"PING":
-        uart.write(b"PONG\n")
+        send(b"PONG\n")
     elif cmd == b"STAT":
-        uart.write(("STAT lines=%d long=%d stale=%d baud=%d mode=%s draws=%d draw_ms_last=%d draw_ms_max=%d\n"
-                    % (lines, too_long, stale, baud, MODE, draws, draw_ms_last, draw_ms_max)).encode())
+        send(("STAT lines=%d long=%d stale=%d tx_short=%d baud=%d mode=%s draws=%d draw_ms_last=%d draw_ms_max=%d\n"
+                    % (lines, too_long, stale, tx_short, baud, MODE, draws, draw_ms_last, draw_ms_max)).encode())
     elif cmd.startswith(b"BAUD="):
         try:
             new = int(cmd[5:])
         except ValueError:
             new = 0
         if not 1200 <= new <= 921600:
-            uart.write(b"ERR:BAUD\n")
+            send(b"ERR:BAUD\n")
             return
-        uart.write(("OK BAUD=%d\n" % new).encode())
+        send(("OK BAUD=%d\n" % new).encode())
         time.sleep_ms(50)
         uart = open_uart(new)
         baud = new
         print("baud ->", new)
     else:
-        uart.write(b"ERR:CMD\n")
+        send(b"ERR:CMD\n")
 
 
 while True:
@@ -298,7 +317,7 @@ while True:
             if skipping or len(line) > MAX_LINE:
                 skipping = False
                 too_long += 1
-                uart.write(b"ERR:LONG\n")
+                send(b"ERR:LONG\n")
                 continue
             handle(line)
     elif RESYNC and buf and time.ticks_diff(time.ticks_ms(), last_rx) > LINE_TIMEOUT_MS:
